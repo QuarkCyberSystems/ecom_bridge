@@ -6,7 +6,7 @@ frappe.ui.form.on('Ecommerce Integration Log', {
 		if (frm.doc.request_data && frm.doc.status=='Error'){
 			frm.add_custom_button('Retry', function() {
 				frappe.call({
-					method:"ecommerce_integrations.ecommerce_integrations.doctype.ecommerce_integration_log.ecommerce_integration_log.resync",
+					method:"ecom_bridge.ecom_bridge.doctype.ecommerce_integration_log.ecommerce_integration_log.resync",
 					args:{
 						method:frm.doc.method,
 						name: frm.doc.name,
