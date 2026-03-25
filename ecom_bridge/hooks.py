@@ -108,10 +108,6 @@ fixtures = [
 		"dt": "Custom Field",
 		"filters": [["module", "=", "Ecom Bridge"]],
 	},
-	{
-		"dt": "Page",
-		"filters": [["module", "=", "Ecom Bridge"]],
-	},
 ]
 
 
