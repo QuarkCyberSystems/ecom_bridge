@@ -7,7 +7,7 @@ app_license = "mit"
 
 # Apps
 # ------------------
-required_apps = ["frappe/erpnext", "frappe/ecommerce_integrations"]
+required_apps = ["erpnext", "ecommerce_integrations"]
 
 
 # Document Events
