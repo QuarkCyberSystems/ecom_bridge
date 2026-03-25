@@ -3,12 +3,13 @@ name = "ecom_bridge"
 authors = [
     { name = "sammish", email = "sammish.thundiyi@gmail.com"}
 ]
-description = "ecom_bridge"
+description = "Custom ecommerce bridge for Shopify & Amazon integrations with ERPNext"
 requires-python = ">=3.10"
 readme = "README.md"
 dynamic = ["version"]
 dependencies = [
     # "frappe~=15.0.0" # Installed and managed by bench.
+    "ecommerce_integrations",
 ]
 
 [build-system]

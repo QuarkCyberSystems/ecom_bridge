@@ -1,0 +1,26 @@
+[
+ {
+  "content": null,
+  "docstatus": 0,
+  "doctype": "Page",
+  "icon": "fa fa-shopping-cart",
+  "modified": "2026-03-24 00:00:00",
+  "module": "Ecom Bridge",
+  "name": "ecom-dashboard",
+  "page_name": "ecom-dashboard",
+  "restrict_to_domain": null,
+  "roles": [
+   {
+    "parent": "ecom-dashboard",
+    "parentfield": "roles",
+    "parenttype": "Page",
+    "role": "System Manager"
+   }
+  ],
+  "script": null,
+  "standard": "Yes",
+  "style": null,
+  "system_page": 0,
+  "title": "Ecom Dashboard"
+ }
+]

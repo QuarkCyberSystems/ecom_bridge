@@ -1,0 +1,287 @@
+{
+	"actions": [],
+	"allow_rename": 0,
+	"creation": "2026-03-24 00:00:00.000000",
+	"doctype": "DocType",
+	"engine": "InnoDB",
+	"field_order": [
+		"enabled",
+		"section_general",
+		"company",
+		"default_currency",
+		"column_break_general",
+		"log_retention_days",
+		"section_shopify",
+		"enable_shopify_overrides",
+		"shopify_default_warehouse",
+		"shopify_cost_center",
+		"column_break_shopify",
+		"shopify_tax_template",
+		"shopify_shipping_account",
+		"section_shopify_zatca",
+		"enable_zatca_validation",
+		"zatca_vat_account",
+		"column_break_zatca",
+		"zatca_vat_rate",
+		"section_amazon",
+		"enable_amazon_overrides",
+		"amazon_default_warehouse",
+		"amazon_cost_center",
+		"column_break_amazon",
+		"amazon_tax_template",
+		"amazon_default_customer_group",
+		"section_inventory",
+		"sync_inventory_to_shopify",
+		"sync_inventory_to_amazon",
+		"column_break_inventory",
+		"inventory_sync_interval",
+		"section_notifications",
+		"enable_error_notifications",
+		"notification_email",
+		"column_break_notifications",
+		"notify_on_order_sync_failure",
+		"notify_on_inventory_mismatch"
+	],
+	"fields": [
+		{
+			"default": "1",
+			"fieldname": "enabled",
+			"fieldtype": "Check",
+			"label": "Enabled"
+		},
+		{
+			"fieldname": "section_general",
+			"fieldtype": "Section Break",
+			"label": "General Settings"
+		},
+		{
+			"fieldname": "company",
+			"fieldtype": "Link",
+			"label": "Company",
+			"options": "Company",
+			"reqd": 1
+		},
+		{
+			"fieldname": "default_currency",
+			"fieldtype": "Link",
+			"label": "Default Currency",
+			"options": "Currency"
+		},
+		{
+			"fieldname": "column_break_general",
+			"fieldtype": "Column Break"
+		},
+		{
+			"default": "30",
+			"fieldname": "log_retention_days",
+			"fieldtype": "Int",
+			"label": "Log Retention (Days)"
+		},
+		{
+			"fieldname": "section_shopify",
+			"fieldtype": "Section Break",
+			"label": "Shopify Overrides"
+		},
+		{
+			"default": "1",
+			"fieldname": "enable_shopify_overrides",
+			"fieldtype": "Check",
+			"label": "Enable Shopify Overrides"
+		},
+		{
+			"fieldname": "shopify_default_warehouse",
+			"fieldtype": "Link",
+			"label": "Default Warehouse",
+			"options": "Warehouse",
+			"depends_on": "eval:doc.enable_shopify_overrides"
+		},
+		{
+			"fieldname": "shopify_cost_center",
+			"fieldtype": "Link",
+			"label": "Cost Center",
+			"options": "Cost Center",
+			"depends_on": "eval:doc.enable_shopify_overrides"
+		},
+		{
+			"fieldname": "column_break_shopify",
+			"fieldtype": "Column Break"
+		},
+		{
+			"fieldname": "shopify_tax_template",
+			"fieldtype": "Link",
+			"label": "Sales Tax Template",
+			"options": "Sales Taxes and Charges Template",
+			"depends_on": "eval:doc.enable_shopify_overrides"
+		},
+		{
+			"fieldname": "shopify_shipping_account",
+			"fieldtype": "Link",
+			"label": "Shipping Charges Account",
+			"options": "Account",
+			"depends_on": "eval:doc.enable_shopify_overrides"
+		},
+		{
+			"fieldname": "section_shopify_zatca",
+			"fieldtype": "Section Break",
+			"label": "ZATCA Compliance",
+			"depends_on": "eval:doc.enable_shopify_overrides"
+		},
+		{
+			"default": "0",
+			"fieldname": "enable_zatca_validation",
+			"fieldtype": "Check",
+			"label": "Enable ZATCA Validation"
+		},
+		{
+			"fieldname": "zatca_vat_account",
+			"fieldtype": "Link",
+			"label": "VAT Account",
+			"options": "Account",
+			"depends_on": "eval:doc.enable_zatca_validation",
+			"mandatory_depends_on": "eval:doc.enable_zatca_validation"
+		},
+		{
+			"fieldname": "column_break_zatca",
+			"fieldtype": "Column Break"
+		},
+		{
+			"default": "15",
+			"fieldname": "zatca_vat_rate",
+			"fieldtype": "Float",
+			"label": "VAT Rate (%)",
+			"depends_on": "eval:doc.enable_zatca_validation"
+		},
+		{
+			"fieldname": "section_amazon",
+			"fieldtype": "Section Break",
+			"label": "Amazon Overrides"
+		},
+		{
+			"default": "1",
+			"fieldname": "enable_amazon_overrides",
+			"fieldtype": "Check",
+			"label": "Enable Amazon Overrides"
+		},
+		{
+			"fieldname": "amazon_default_warehouse",
+			"fieldtype": "Link",
+			"label": "Default Warehouse",
+			"options": "Warehouse",
+			"depends_on": "eval:doc.enable_amazon_overrides"
+		},
+		{
+			"fieldname": "amazon_cost_center",
+			"fieldtype": "Link",
+			"label": "Cost Center",
+			"options": "Cost Center",
+			"depends_on": "eval:doc.enable_amazon_overrides"
+		},
+		{
+			"fieldname": "column_break_amazon",
+			"fieldtype": "Column Break"
+		},
+		{
+			"fieldname": "amazon_tax_template",
+			"fieldtype": "Link",
+			"label": "Sales Tax Template",
+			"options": "Sales Taxes and Charges Template",
+			"depends_on": "eval:doc.enable_amazon_overrides"
+		},
+		{
+			"fieldname": "amazon_default_customer_group",
+			"fieldtype": "Link",
+			"label": "Default Customer Group",
+			"options": "Customer Group",
+			"depends_on": "eval:doc.enable_amazon_overrides"
+		},
+		{
+			"fieldname": "section_inventory",
+			"fieldtype": "Section Break",
+			"label": "Inventory Sync"
+		},
+		{
+			"default": "0",
+			"fieldname": "sync_inventory_to_shopify",
+			"fieldtype": "Check",
+			"label": "Sync Inventory to Shopify"
+		},
+		{
+			"default": "0",
+			"fieldname": "sync_inventory_to_amazon",
+			"fieldtype": "Check",
+			"label": "Sync Inventory to Amazon"
+		},
+		{
+			"fieldname": "column_break_inventory",
+			"fieldtype": "Column Break"
+		},
+		{
+			"default": "30",
+			"fieldname": "inventory_sync_interval",
+			"fieldtype": "Select",
+			"label": "Sync Interval (Minutes)",
+			"options": "5\n10\n15\n30\n60"
+		},
+		{
+			"fieldname": "section_notifications",
+			"fieldtype": "Section Break",
+			"label": "Notifications"
+		},
+		{
+			"default": "0",
+			"fieldname": "enable_error_notifications",
+			"fieldtype": "Check",
+			"label": "Enable Error Notifications"
+		},
+		{
+			"fieldname": "notification_email",
+			"fieldtype": "Data",
+			"label": "Notification Email",
+			"options": "Email",
+			"depends_on": "eval:doc.enable_error_notifications",
+			"mandatory_depends_on": "eval:doc.enable_error_notifications"
+		},
+		{
+			"fieldname": "column_break_notifications",
+			"fieldtype": "Column Break"
+		},
+		{
+			"default": "1",
+			"fieldname": "notify_on_order_sync_failure",
+			"fieldtype": "Check",
+			"label": "Notify on Order Sync Failure",
+			"depends_on": "eval:doc.enable_error_notifications"
+		},
+		{
+			"default": "1",
+			"fieldname": "notify_on_inventory_mismatch",
+			"fieldtype": "Check",
+			"label": "Notify on Inventory Mismatch",
+			"depends_on": "eval:doc.enable_error_notifications"
+		}
+	],
+	"index_web_pages_for_search": 0,
+	"issingle": 1,
+	"links": [],
+	"modified": "2026-03-24 00:00:00.000000",
+	"modified_by": "Administrator",
+	"module": "Ecom Bridge",
+	"name": "Ecom Bridge Settings",
+	"owner": "Administrator",
+	"permissions": [
+		{
+			"create": 1,
+			"delete": 1,
+			"email": 1,
+			"print": 1,
+			"read": 1,
+			"role": "System Manager",
+			"share": 1,
+			"write": 1
+		}
+	],
+	"sort_field": "creation",
+	"sort_order": "DESC",
+	"states": [],
+	"track_changes": 1
+}
