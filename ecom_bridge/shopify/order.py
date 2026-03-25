@@ -2,17 +2,17 @@ import frappe
 from frappe import _
 from frappe.utils import cstr, flt
 
-from ecommerce_integrations.shopify.constants import (
+from ecom_bridge.integrations.shopify.constants import (
 	ORDER_ID_FIELD,
 	SETTING_DOCTYPE,
 )
-from ecommerce_integrations.shopify.order import create_sales_order as original_create_sales_order
-from ecommerce_integrations.shopify.utils import create_shopify_log
+from ecom_bridge.integrations.shopify.order import create_sales_order as original_create_sales_order
+from ecom_bridge.integrations.shopify.utils import create_shopify_log
 
 
 def custom_create_sales_order(shopify_order, setting, company=None):
 	"""
-	Production override of ecommerce_integrations create_sales_order.
+	Production override of original create_sales_order.
 
 	Adds:
 	- Custom field mapping (tags, notes, source tracking)

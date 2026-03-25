@@ -8,7 +8,7 @@ from ecom_bridge.utils.logger import log_error, log_info
 def after_amazon_order_sync(doc, method):
 	"""
 	Post-processing hook for Amazon Sales Orders.
-	Called after the ecommerce_integrations Amazon repository creates an SO.
+	Called after the Amazon repository creates an SO.
 
 	Since Amazon integration creates orders via AmazonRepository.create_sales_order(),
 	we hook into the Sales Order doc_events to apply custom logic.

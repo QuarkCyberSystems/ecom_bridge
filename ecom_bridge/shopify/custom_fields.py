@@ -5,7 +5,7 @@ def setup_custom_fields():
 	"""
 	Create custom fields on standard DocTypes for ecom_bridge.
 
-	First ensures ecommerce_integrations fields exist,
+	First ensures base Shopify/Amazon fields exist,
 	then adds ecom_bridge fields with safe insert_after targets.
 
 	Run via:
@@ -13,7 +13,7 @@ def setup_custom_fields():
 	"""
 	from frappe.custom.doctype.custom_field.custom_field import create_custom_fields
 
-	# Step 1: Ensure ecommerce_integrations fields exist
+	# Step 1: Ensure base Shopify/Amazon fields exist
 	_ensure_ecommerce_integration_fields()
 
 	# Step 2: Build all custom fields with safe insert_after
@@ -28,7 +28,7 @@ def setup_custom_fields():
 
 def _ensure_ecommerce_integration_fields():
 	"""
-	Ensure ecommerce_integrations custom fields exist on the site.
+	Ensure base integration custom fields exist on the site.
 	These are the parent fields our fields depend on.
 	"""
 	from frappe.custom.doctype.custom_field.custom_field import create_custom_fields
@@ -36,7 +36,7 @@ def _ensure_ecommerce_integration_fields():
 	# Only create if they don't already exist
 	parent_fields = {}
 
-	# Shopify fields (normally created by ecommerce_integrations)
+	# Shopify fields (created by ecom_bridge)
 	if not frappe.db.exists("Custom Field", {"dt": "Sales Order", "fieldname": "shopify_order_id"}):
 		parent_fields.setdefault("Sales Order", []).extend([
 			{

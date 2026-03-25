@@ -190,7 +190,7 @@ def _get_sqs_queue_url(settings):
 
 def _get_aws_region(country_code):
 	"""Map Amazon country code to AWS region."""
-	from ecommerce_integrations.amazon.doctype.amazon_sp_api_settings.amazon_sp_api import (
+	from ecom_bridge.ecom_bridge.doctype.amazon_sp_api_settings.amazon_sp_api import (
 		Util,
 	)
 

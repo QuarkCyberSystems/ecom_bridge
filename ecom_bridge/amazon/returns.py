@@ -99,7 +99,7 @@ def _process_refunded_orders():
 	"""
 	from ecom_bridge.amazon.sp_api_client import get_sp_api_instance, call_sp_api_with_retry
 
-	from ecommerce_integrations.amazon.doctype.amazon_sp_api_settings.amazon_sp_api import Orders
+	from ecom_bridge.ecom_bridge.doctype.amazon_sp_api_settings.amazon_sp_api import Orders
 
 	orders_api = get_sp_api_instance(Orders)
 	if not orders_api:

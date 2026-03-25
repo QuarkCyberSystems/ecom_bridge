@@ -31,7 +31,7 @@ def after_product_sync(doc, method):
 	Post-sync processing for Shopify products.
 	Sets marketplace source and logs the sync.
 	"""
-	from ecommerce_integrations.shopify.constants import MODULE_NAME
+	from ecom_bridge.integrations.shopify.constants import MODULE_NAME
 
 	# Check if this item has a Shopify ecommerce item link
 	ecom_item = frappe.db.exists(

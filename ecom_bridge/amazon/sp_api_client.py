@@ -2,7 +2,7 @@
 Amazon SP-API client extensions for ecom_bridge.
 
 Adds Feeds API and Fulfillment API to the existing SPAPI base class
-from ecommerce_integrations.
+from ecom_bridge.integrations.
 """
 
 import json
@@ -11,7 +11,7 @@ import time
 import frappe
 from frappe import _
 
-from ecommerce_integrations.amazon.doctype.amazon_sp_api_settings.amazon_sp_api import (
+from ecom_bridge.ecom_bridge.doctype.amazon_sp_api_settings.amazon_sp_api import (
 	SPAPI,
 	SPAPIError,
 )

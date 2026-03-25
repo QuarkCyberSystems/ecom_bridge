@@ -64,7 +64,7 @@ def force_sync(integration):
 	"""Trigger a manual sync for the specified integration."""
 	if integration == "shopify":
 		frappe.enqueue(
-			"ecommerce_integrations.shopify.order.sync_old_orders",
+			"ecom_bridge.integrations.shopify.order.sync_old_orders",
 			queue="short",
 			timeout=600,
 		)
@@ -73,7 +73,7 @@ def force_sync(integration):
 	elif integration == "amazon":
 		if frappe.db.exists("DocType", "Amazon SP API Settings"):
 			frappe.enqueue(
-				"ecommerce_integrations.amazon.doctype.amazon_sp_api_settings"
+				"ecom_bridge.ecom_bridge.doctype.amazon_sp_api_settings"
 				".amazon_sp_api_settings.schedule_get_order_details",
 				queue="short",
 				timeout=600,
@@ -226,7 +226,7 @@ def _is_amazon_enabled():
 def _retry_shopify_sync(log):
 	"""Retry a failed Shopify sync."""
 	frappe.enqueue(
-		"ecommerce_integrations.shopify.order.sync_old_orders",
+		"ecom_bridge.integrations.shopify.order.sync_old_orders",
 		queue="short",
 		timeout=300,
 	)
@@ -236,7 +236,7 @@ def _retry_amazon_sync(log):
 	"""Retry a failed Amazon sync."""
 	if frappe.db.exists("DocType", "Amazon SP API Settings"):
 		frappe.enqueue(
-			"ecommerce_integrations.amazon.doctype.amazon_sp_api_settings"
+			"ecom_bridge.ecom_bridge.doctype.amazon_sp_api_settings"
 			".amazon_sp_api_settings.schedule_get_order_details",
 			queue="short",
 			timeout=300,

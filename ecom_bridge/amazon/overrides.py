@@ -106,7 +106,7 @@ def after_insert_customer(doc, method):
 
 def validate_item(doc, method):
 	"""Validate items synced from Amazon."""
-	from ecommerce_integrations.ecommerce_integrations.doctype.ecommerce_item import ecommerce_item
+	from ecom_bridge.ecom_bridge.doctype.ecommerce_item import ecommerce_item
 
 	# Check if this item is linked to Amazon
 	is_amazon = frappe.db.exists(

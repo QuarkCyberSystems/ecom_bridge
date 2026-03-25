@@ -8,7 +8,7 @@ from ecom_bridge.utils.logger import log_error, log_info
 def validate_inventory_before_sync():
 	"""
 	Pre-validation before pushing inventory to Shopify.
-	Called by scheduler before the ecommerce_integrations sync runs.
+	Called by scheduler before the inventory sync runs.
 	"""
 	from ecom_bridge.shopify.overrides import get_bridge_settings
 

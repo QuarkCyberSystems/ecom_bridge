@@ -30,7 +30,7 @@ def _create_log(status, integration, message, doc=None):
 	"""Create an Ecommerce Integration Log entry."""
 	try:
 		if not frappe.db.exists("DocType", "Ecommerce Integration Log"):
-			# Fallback to Error Log if ecommerce_integrations log not available
+			# Fallback to Error Log if integration log not available
 			frappe.log_error(
 				title=f"Ecom Bridge [{integration}] - {status}",
 				message=message,

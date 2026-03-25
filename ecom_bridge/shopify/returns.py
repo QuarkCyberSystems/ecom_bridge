@@ -10,8 +10,8 @@ import frappe
 from frappe import _
 from frappe.utils import cstr, flt, getdate, nowdate
 
-from ecommerce_integrations.shopify.constants import ORDER_ID_FIELD, SETTING_DOCTYPE
-from ecommerce_integrations.shopify.utils import create_shopify_log
+from ecom_bridge.integrations.shopify.constants import ORDER_ID_FIELD, SETTING_DOCTYPE
+from ecom_bridge.integrations.shopify.utils import create_shopify_log
 
 from ecom_bridge.utils.logger import log_error, log_info
 
