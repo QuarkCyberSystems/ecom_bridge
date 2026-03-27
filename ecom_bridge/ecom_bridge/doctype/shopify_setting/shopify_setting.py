@@ -21,6 +21,7 @@ from ecom_bridge.integrations.shopify.constants import (
 	CUSTOMER_ID_FIELD,
 	FULLFILLMENT_ID_FIELD,
 	ITEM_SELLING_RATE_FIELD,
+	MODULE_NAME,
 	ORDER_ID_FIELD,
 	ORDER_ITEM_DISCOUNT_FIELD,
 	ORDER_NUMBER_FIELD,
@@ -93,6 +94,98 @@ class ShopifySetting(SettingController):
 					"shopify_warehouse_mapping",
 					{"shopify_location_id": location.id, "shopify_location_name": location.name},
 				)
+
+	@frappe.whitelist()
+	@connection.temp_shopify_session
+	def bulk_map_items(self):
+		"""Fetch all products from Shopify and try to map them to existing ERPNext items.
+
+		Uses the configured match_by strategy (SKU, Item Name, or Barcode).
+		Returns a summary of mapped, skipped, and unmatched items.
+		"""
+		from shopify.collection import PaginatedIterator
+		from shopify.resources import Product as ShopifyProductResource
+
+		from ecom_bridge.ecom_bridge.doctype.ecommerce_item import ecommerce_item as ei
+		from ecom_bridge.integrations.shopify.product import _find_matching_item
+
+		match_by = self.item_match_by or "SKU"
+		mapped = []
+		skipped = []
+		unmatched = []
+
+		for products in PaginatedIterator(ShopifyProductResource.find(limit=250)):
+			for product in products:
+				product_dict = product.to_dict()
+				product_id = str(product_dict["id"])
+
+				for variant in product_dict.get("variants", []):
+					variant_id = str(variant["id"])
+					sku = variant.get("sku") or ""
+
+					if ei.is_synced(MODULE_NAME, product_id, variant_id, sku):
+						skipped.append({
+							"shopify_product": product_dict.get("title"),
+							"variant": variant.get("title"),
+							"sku": sku,
+							"status": "Already Mapped",
+						})
+						continue
+
+					item_dict = {
+						"sku": sku,
+						"title": product_dict.get("title", "").strip(),
+						"item_name": product_dict.get("title", "").strip(),
+						"barcode": variant.get("barcode"),
+						"variants": [variant],
+					}
+
+					matched_item = _find_matching_item(item_dict, match_by)
+
+					if matched_item:
+						try:
+							frappe.get_doc({
+								"doctype": "Ecommerce Item",
+								"integration": MODULE_NAME,
+								"erpnext_item_code": matched_item,
+								"integration_item_code": product_id,
+								"has_variants": 0,
+								"variant_id": variant_id,
+								"sku": sku,
+							}).insert()
+							mapped.append({
+								"shopify_product": product_dict.get("title"),
+								"variant": variant.get("title"),
+								"sku": sku,
+								"erpnext_item": matched_item,
+								"status": "Mapped",
+							})
+						except Exception as e:
+							unmatched.append({
+								"shopify_product": product_dict.get("title"),
+								"variant": variant.get("title"),
+								"sku": sku,
+								"status": f"Error: {str(e)}",
+							})
+					else:
+						unmatched.append({
+							"shopify_product": product_dict.get("title"),
+							"variant": variant.get("title"),
+							"sku": sku,
+							"status": "No Match Found",
+						})
+
+		frappe.db.commit()
+		return {
+			"mapped": len(mapped),
+			"skipped": len(skipped),
+			"unmatched": len(unmatched),
+			"details": {
+				"mapped": mapped,
+				"skipped": skipped,
+				"unmatched": unmatched,
+			},
+		}
 
 	def get_erpnext_warehouses(self) -> List[ERPNextWarehouse]:
 		return [wh_map.erpnext_warehouse for wh_map in self.shopify_warehouse_mapping]

@@ -7,6 +7,11 @@
  "field_order": [
   "enable_shopify",
   "column_break_4",
+  "item_mapping_section",
+  "item_sync_mode",
+  "column_break_item_mapping",
+  "item_match_by",
+  "bulk_map_items",
   "section_break_2",
   "shopify_url",
   "column_break_3",
@@ -70,6 +75,39 @@
   {
    "fieldname": "column_break_4",
    "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "item_mapping_section",
+   "fieldtype": "Section Break",
+   "label": "Item Mapping",
+   "depends_on": "eval:doc.enable_shopify"
+  },
+  {
+   "default": "Auto-create new items",
+   "description": "<b>Auto-create new items</b>: Creates new ERPNext items for unmapped Shopify products.<br><b>Map to existing items only</b>: Only maps to existing ERPNext items, skips if no match.<br><b>Map existing first, then auto-create</b>: Tries to match existing items, creates new if no match found.",
+   "fieldname": "item_sync_mode",
+   "fieldtype": "Select",
+   "label": "Item Sync Mode",
+   "options": "Auto-create new items\nMap to existing items only\nMap existing first, then auto-create"
+  },
+  {
+   "fieldname": "column_break_item_mapping",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "SKU",
+   "description": "Field used to match Shopify products with existing ERPNext items.<br><b>SKU</b>: Match Shopify SKU with ERPNext item_code.<br><b>Item Name</b>: Match Shopify product title with ERPNext item_name.<br><b>Barcode</b>: Match Shopify barcode with ERPNext barcode.",
+   "fieldname": "item_match_by",
+   "fieldtype": "Select",
+   "label": "Match Items By",
+   "options": "SKU\nItem Name\nBarcode",
+   "depends_on": "eval:doc.item_sync_mode != 'Auto-create new items'"
+  },
+  {
+   "fieldname": "bulk_map_items",
+   "fieldtype": "Button",
+   "label": "Bulk Map Items",
+   "depends_on": "eval:doc.enable_shopify && doc.item_sync_mode != 'Auto-create new items'"
   },
   {
    "fieldname": "section_break_2",
@@ -392,7 +430,7 @@
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2023-10-24 10:38:49.247431",
+ "modified": "2026-03-27 14:00:00.000000",
  "modified_by": "Administrator",
  "module": "Ecom Bridge",
  "name": "Shopify Setting",

@@ -15,6 +15,37 @@ frappe.ui.form.on("Shopify Setting", {
 		});
 	},
 
+	bulk_map_items: function (frm) {
+		frappe.call({
+			doc: frm.doc,
+			method: "bulk_map_items",
+			freeze: true,
+			freeze_message: __("Fetching Shopify products and mapping to ERPNext items..."),
+			callback: function (r) {
+				if (r.message) {
+					let result = r.message;
+					let msg = `<b>${__("Bulk Map Results")}</b><br><br>`;
+					msg += `${__("Mapped")}: <b>${result.mapped}</b><br>`;
+					msg += `${__("Already Mapped")}: <b>${result.skipped}</b><br>`;
+					msg += `${__("Unmatched")}: <b>${result.unmatched}</b><br>`;
+
+					if (result.details.unmatched.length > 0) {
+						msg += `<br><b>${__("Unmatched Products")}:</b><br>`;
+						result.details.unmatched.forEach(function (item) {
+							msg += `- ${item.shopify_product} (SKU: ${item.sku || "N/A"})<br>`;
+						});
+					}
+
+					frappe.msgprint({
+						title: __("Bulk Map Items"),
+						message: msg,
+						indicator: result.unmatched > 0 ? "orange" : "green",
+					});
+				}
+			},
+		});
+	},
+
 	fetch_shopify_locations: function (frm) {
 		frappe.call({
 			doc: frm.doc,

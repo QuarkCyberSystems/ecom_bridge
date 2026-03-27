@@ -266,46 +266,141 @@ def _get_item_image(product_dict):
 def _match_sku_and_link_item(
 	item_dict, product_id, variant_id, variant_of=None, has_variant=False
 ) -> bool:
-	"""Tries to match new item with existing item using Shopify SKU == item_code.
+	"""Tries to match new item with existing ERPNext item based on configured match strategy.
 
+	Supports matching by SKU (item_code), Item Name, or Barcode.
 	Returns true if matched and linked.
 	"""
-	sku = item_dict["sku"]
-	if not sku or variant_of or has_variant:
+	if variant_of or has_variant:
 		return False
 
-	item_name = frappe.db.get_value("Item", {"item_code": sku})
-	if item_name:
+	setting = frappe.get_cached_doc(SETTING_DOCTYPE)
+	match_by = getattr(setting, "item_match_by", "SKU") or "SKU"
+
+	matched_item = _find_matching_item(item_dict, match_by)
+
+	if matched_item:
 		try:
-			ecommerce_item = frappe.get_doc(
+			ecom_item = frappe.get_doc(
 				{
 					"doctype": "Ecommerce Item",
 					"integration": MODULE_NAME,
-					"erpnext_item_code": item_name,
+					"erpnext_item_code": matched_item,
 					"integration_item_code": product_id,
 					"has_variants": 0,
 					"variant_id": cstr(variant_id),
-					"sku": sku,
+					"sku": item_dict.get("sku") or "",
 				}
 			)
-
-			ecommerce_item.insert()
+			ecom_item.insert()
 			return True
 		except Exception:
 			return False
+	return False
+
+
+def _find_matching_item(item_dict, match_by="SKU"):
+	"""Find existing ERPNext item based on matching strategy."""
+
+	if match_by == "SKU":
+		sku = item_dict.get("sku")
+		if sku:
+			return frappe.db.get_value("Item", {"item_code": sku})
+
+	elif match_by == "Item Name":
+		title = (item_dict.get("title") or item_dict.get("item_name") or "").strip()
+		if title:
+			return frappe.db.get_value("Item", {"item_name": title})
+
+	elif match_by == "Barcode":
+		barcode = item_dict.get("barcode") or _get_barcode_from_variant(item_dict)
+		if barcode:
+			item_barcode = frappe.db.get_value(
+				"Item Barcode", {"barcode": barcode}, "parent"
+			)
+			return item_barcode
+
+	return None
+
+
+def _get_barcode_from_variant(item_dict):
+	"""Extract barcode from variant data."""
+	variants = item_dict.get("variants")
+	if variants and len(variants) > 0:
+		return variants[0].get("barcode")
+	return None
 
 
 def create_items_if_not_exist(order):
-	"""Using shopify order, sync all items that are not already synced."""
-	for item in order.get("line_items", []):
+	"""Using shopify order, sync all items that are not already synced.
 
+	Respects the item_sync_mode setting:
+	- Auto-create new items: Always creates new items (original behavior)
+	- Map to existing items only: Only tries to match, skips if no match
+	- Map existing first, then auto-create: Tries match first, creates if no match
+	"""
+	setting = frappe.get_cached_doc(SETTING_DOCTYPE)
+	sync_mode = getattr(setting, "item_sync_mode", "Auto-create new items") or "Auto-create new items"
+
+	for item in order.get("line_items", []):
 		product_id = item["product_id"]
 		variant_id = item.get("variant_id")
 		sku = item.get("sku")
 		product = ShopifyProduct(product_id, variant_id=variant_id, sku=sku)
 
-		if not product.is_synced():
+		if product.is_synced():
+			continue
+
+		if sync_mode == "Auto-create new items":
 			product.sync_product()
+
+		elif sync_mode == "Map to existing items only":
+			_try_map_existing_item(item, setting)
+
+		elif sync_mode == "Map existing first, then auto-create":
+			if not _try_map_existing_item(item, setting):
+				product.sync_product()
+
+
+def _try_map_existing_item(line_item, setting):
+	"""Try to match a Shopify line item with an existing ERPNext item.
+
+	Returns True if matched and linked, False otherwise.
+	"""
+	match_by = getattr(setting, "item_match_by", "SKU") or "SKU"
+	product_id = str(line_item["product_id"])
+	variant_id = str(line_item.get("variant_id") or "")
+	sku = line_item.get("sku") or ""
+
+	item_dict = {
+		"sku": sku,
+		"title": line_item.get("title", "").strip(),
+		"item_name": line_item.get("name", "").strip(),
+		"barcode": line_item.get("barcode"),
+		"variants": line_item.get("variants"),
+	}
+
+	matched_item = _find_matching_item(item_dict, match_by)
+
+	if matched_item:
+		if not ecommerce_item.is_synced(MODULE_NAME, product_id, variant_id, sku):
+			try:
+				frappe.get_doc(
+					{
+						"doctype": "Ecommerce Item",
+						"integration": MODULE_NAME,
+						"erpnext_item_code": matched_item,
+						"integration_item_code": product_id,
+						"has_variants": 0,
+						"variant_id": variant_id,
+						"sku": sku,
+					}
+				).insert()
+				return True
+			except Exception:
+				return False
+		return True
+	return False
 
 
 def get_item_code(shopify_item):
