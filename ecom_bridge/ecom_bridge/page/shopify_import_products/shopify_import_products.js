@@ -103,7 +103,7 @@ shopify.ProductImporter = class {
 	async fetchProductCount() {
 
 		try {
-			const { message: { erpnextCount, shopifyCount, syncedCount } } = await frappe.call({ method: 'ecom_bridge.integrations.shopify.page.shopify_import_products.shopify_import_products.get_product_count' });
+			const { message: { erpnextCount, shopifyCount, syncedCount } } = await frappe.call({ method: 'ecom_bridge.ecom_bridge.page.shopify_import_products.shopify_import_products.get_product_count' });
 
 			this.wrapper.find('#count-products-shopify').text(shopifyCount);
 			this.wrapper.find('#count-products-erpnext').text(erpnextCount);
@@ -164,7 +164,7 @@ shopify.ProductImporter = class {
 	async fetchShopifyProducts(from_ = null) {
 
 		try {
-			const { message: { products, nextUrl, prevUrl } } = await frappe.call({ method: 'ecom_bridge.integrations.shopify.page.shopify_import_products.shopify_import_products.get_shopify_products', args: { from_ } });
+			const { message: { products, nextUrl, prevUrl } } = await frappe.call({ method: 'ecom_bridge.ecom_bridge.page.shopify_import_products.shopify_import_products.get_shopify_products', args: { from_ } });
 			this.nextUrl = nextUrl;
 			this.prevUrl = prevUrl;
 
@@ -261,7 +261,7 @@ shopify.ProductImporter = class {
 	async syncProduct(product) {
 
 		const { message: status } = await frappe.call({
-			method: 'ecom_bridge.integrations.shopify.page.shopify_import_products.shopify_import_products.sync_product',
+			method: 'ecom_bridge.ecom_bridge.page.shopify_import_products.shopify_import_products.sync_product',
 			args: { product },
 		});
 
@@ -275,7 +275,7 @@ shopify.ProductImporter = class {
     async resyncProduct(product) {
 
         const { message: status } = await frappe.call({
-            method: 'ecom_bridge.integrations.shopify.page.shopify_import_products.shopify_import_products.resync_product',
+            method: 'ecom_bridge.ecom_bridge.page.shopify_import_products.shopify_import_products.resync_product',
             args: { product },
         });
 
@@ -312,7 +312,7 @@ shopify.ProductImporter = class {
 		if (this.syncRunning) {
 			frappe.msgprint(__('Sync already in progress'));
 		} else {
-			frappe.call({ method: 'ecom_bridge.integrations.shopify.page.shopify_import_products.shopify_import_products.import_all_products' })
+			frappe.call({ method: 'ecom_bridge.ecom_bridge.page.shopify_import_products.shopify_import_products.import_all_products' })
 		}
 
 		// sync progress
