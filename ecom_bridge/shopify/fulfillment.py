@@ -91,79 +91,101 @@ def create_fulfillment_on_shopify(shopify_order_id, delivery_note):
 	"""
 	Create a fulfillment in Shopify for the given order.
 
-	Uses the FulfillmentOrder-based API (2024-01+):
+	Uses direct REST API calls to:
 	1. Get fulfillment orders for the Shopify order
-	2. Create a fulfillment via FulfillmentV2
+	2. Create a fulfillment from the open fulfillment orders
 
 	Called as a background job from on_submit_delivery_note.
 	"""
-	from ecom_bridge.integrations.shopify.connection import temp_shopify_session
+	import json
+	from urllib.error import HTTPError
+	from urllib.request import Request, urlopen
+
+	from ecom_bridge.integrations.shopify.constants import API_VERSION, SETTING_DOCTYPE
 	from ecom_bridge.integrations.shopify.utils import create_shopify_log
 
-	@temp_shopify_session
-	def _do_fulfill():
-		try:
-			from shopify.resources import FulfillmentOrders
-			from shopify.resources.fulfillment import FulfillmentV2
+	try:
+		setting = frappe.get_doc(SETTING_DOCTYPE)
+		shop_url = setting.shopify_url.replace("https://", "")
+		token = setting.get_password("password")
+		base = f"https://{shop_url}/admin/api/{API_VERSION}"
+		headers = {
+			"X-Shopify-Access-Token": token,
+			"Content-Type": "application/json",
+		}
 
-			# Get open fulfillment orders for this Shopify order
-			fulfillment_orders = FulfillmentOrders.find(order_id=shopify_order_id)
+		# Step 1: Get fulfillment orders
+		req = Request(
+			f"{base}/orders/{shopify_order_id}/fulfillment_orders.json",
+			headers=headers,
+		)
+		resp = urlopen(req)
+		fo_data = json.loads(resp.read())
 
-			open_fo = [
-				fo for fo in fulfillment_orders
-				if fo.status in ("open", "in_progress")
-			]
+		open_fo = [
+			fo for fo in fo_data.get("fulfillment_orders", [])
+			if fo["status"] in ("open", "in_progress")
+		]
 
-			if not open_fo:
-				log_info(
-					"Shopify",
-					f"No open fulfillment orders for Shopify order {shopify_order_id}. "
-					f"Order may already be fulfilled.",
-				)
-				return
-
-			# Build the fulfillment request using fulfillment order line items
-			line_items_by_fo = [
-				{"fulfillment_order_id": fo.id}
-				for fo in open_fo
-			]
-
-			fulfillment = FulfillmentV2()
-			fulfillment.line_items_by_fulfillment_order = line_items_by_fo
-			fulfillment.notify_customer = True
-
-			success = fulfillment.save()
-
-			if success:
-				# Store the Shopify fulfillment ID back on the Delivery Note
-				frappe.db.set_value(
-					"Delivery Note",
-					delivery_note,
-					"shopify_fulfillment_id",
-					str(fulfillment.id),
-				)
-
-				log_info(
-					"Shopify",
-					f"Fulfillment {fulfillment.id} created for order {shopify_order_id}, "
-					f"DN: {delivery_note}",
-				)
-				create_shopify_log(status="Success")
-			else:
-				error_msg = str(fulfillment.errors.full_messages()) if fulfillment.errors else "Unknown error"
-				log_error(
-					"Shopify",
-					f"Failed to create fulfillment for order {shopify_order_id}: {error_msg}. "
-					f"DN: {delivery_note}",
-				)
-				create_shopify_log(status="Error", message=error_msg)
-
-		except Exception as e:
-			log_error(
+		if not open_fo:
+			log_info(
 				"Shopify",
-				f"Error creating fulfillment for order {shopify_order_id}: {e}. "
-				f"DN: {delivery_note}",
+				f"No open fulfillment orders for Shopify order {shopify_order_id}. "
+				f"Order may already be fulfilled.",
 			)
-			create_shopify_log(status="Error", exception=e, rollback=True)
+			return
 
-	_do_fulfill()
+		# Step 2: Create fulfillment
+		line_items_by_fo = [
+			{"fulfillment_order_id": fo["id"]}
+			for fo in open_fo
+		]
+
+		payload = json.dumps({
+			"fulfillment": {
+				"line_items_by_fulfillment_order": line_items_by_fo,
+				"notify_customer": True,
+			}
+		}).encode()
+
+		req = Request(
+			f"{base}/fulfillments.json",
+			data=payload,
+			headers=headers,
+			method="POST",
+		)
+		resp = urlopen(req)
+		result = json.loads(resp.read())
+		fulfillment_id = result["fulfillment"]["id"]
+
+		# Store the Shopify fulfillment ID back on the Delivery Note
+		frappe.db.set_value(
+			"Delivery Note",
+			delivery_note,
+			"shopify_fulfillment_id",
+			str(fulfillment_id),
+		)
+
+		log_info(
+			"Shopify",
+			f"Fulfillment {fulfillment_id} created for order {shopify_order_id}, "
+			f"DN: {delivery_note}",
+		)
+		create_shopify_log(status="Success")
+
+	except HTTPError as e:
+		error_body = e.read().decode() if e.fp else str(e)
+		log_error(
+			"Shopify",
+			f"Failed to create fulfillment for order {shopify_order_id}: "
+			f"HTTP {e.code} — {error_body}. DN: {delivery_note}",
+		)
+		create_shopify_log(status="Error", message=f"HTTP {e.code}: {error_body}")
+
+	except Exception as e:
+		log_error(
+			"Shopify",
+			f"Error creating fulfillment for order {shopify_order_id}: {e}. "
+			f"DN: {delivery_note}",
+		)
+		create_shopify_log(status="Error", exception=e, rollback=True)
