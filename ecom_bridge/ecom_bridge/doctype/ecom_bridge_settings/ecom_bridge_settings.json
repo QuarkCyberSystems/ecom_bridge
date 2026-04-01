@@ -30,6 +30,8 @@
 		"column_break_amazon",
 		"amazon_tax_template",
 		"amazon_default_customer_group",
+		"section_fulfillment",
+		"sync_fulfillment_to_shopify",
 		"section_inventory",
 		"sync_inventory_to_shopify",
 		"sync_inventory_to_amazon",
@@ -193,6 +195,19 @@
 			"label": "Default Customer Group",
 			"options": "Customer Group",
 			"depends_on": "eval:doc.enable_amazon_overrides"
+		},
+		{
+			"fieldname": "section_fulfillment",
+			"fieldtype": "Section Break",
+			"label": "Fulfillment Sync",
+			"depends_on": "eval:doc.enable_shopify_overrides"
+		},
+		{
+			"default": "0",
+			"fieldname": "sync_fulfillment_to_shopify",
+			"fieldtype": "Check",
+			"label": "Sync Fulfillment to Shopify",
+			"description": "When a Delivery Note is submitted for a Shopify order, mark the order as Fulfilled in Shopify"
 		},
 		{
 			"fieldname": "section_inventory",
