@@ -93,29 +93,22 @@ def create_fulfillment_on_shopify(shopify_order_id, delivery_note):
 
 	Uses the FulfillmentOrder-based API (2024-01+):
 	1. Get fulfillment orders for the Shopify order
-	2. Create a fulfillment from the open fulfillment orders
+	2. Create a fulfillment via FulfillmentV2
 
 	Called as a background job from on_submit_delivery_note.
 	"""
-	from shopify.resources import FulfillmentOrder, Order
-
 	from ecom_bridge.integrations.shopify.connection import temp_shopify_session
 	from ecom_bridge.integrations.shopify.utils import create_shopify_log
 
 	@temp_shopify_session
 	def _do_fulfill():
 		try:
-			order = Order.find(shopify_order_id)
-			if not order:
-				log_error(
-					"Shopify",
-					f"Order {shopify_order_id} not found in Shopify. DN: {delivery_note}",
-				)
-				create_shopify_log(status="Error", message=f"Order {shopify_order_id} not found")
-				return
+			from shopify.resources import FulfillmentOrders
+			from shopify.resources.fulfillment import FulfillmentV2
 
-			# Get open fulfillment orders
-			fulfillment_orders = order.fulfillment_orders()
+			# Get open fulfillment orders for this Shopify order
+			fulfillment_orders = FulfillmentOrders.find(order_id=shopify_order_id)
+
 			open_fo = [
 				fo for fo in fulfillment_orders
 				if fo.status in ("open", "in_progress")
@@ -130,15 +123,12 @@ def create_fulfillment_on_shopify(shopify_order_id, delivery_note):
 				return
 
 			# Build the fulfillment request using fulfillment order line items
-			line_items_by_fo = []
-			for fo in open_fo:
-				line_items_by_fo.append({
-					"fulfillment_order_id": fo.id,
-				})
+			line_items_by_fo = [
+				{"fulfillment_order_id": fo.id}
+				for fo in open_fo
+			]
 
-			from shopify.resources import Fulfillment as ShopifyFulfillment
-
-			fulfillment = ShopifyFulfillment()
+			fulfillment = FulfillmentV2()
 			fulfillment.line_items_by_fulfillment_order = line_items_by_fo
 			fulfillment.notify_customer = True
 

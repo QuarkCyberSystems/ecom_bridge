@@ -83,6 +83,71 @@ def force_sync(integration):
 	frappe.throw(f"Unknown integration: {integration}")
 
 
+@frappe.whitelist()
+def force_inventory_sync():
+	"""Manually trigger inventory sync to Shopify, bypassing the scheduler interval."""
+	from ecom_bridge.integrations.shopify.constants import SETTING_DOCTYPE
+
+	setting = frappe.get_doc(SETTING_DOCTYPE)
+	if not setting.is_enabled() or not setting.update_erpnext_stock_levels_to_shopify:
+		frappe.throw("Shopify inventory sync is not enabled in Shopify Setting")
+
+	warehous_map = setting.get_erpnext_to_integration_wh_mapping()
+	if not warehous_map:
+		frappe.throw("No warehouse mapping configured in Shopify Setting")
+
+	from ecom_bridge.controllers.inventory import get_inventory_levels
+	from ecom_bridge.integrations.shopify.constants import MODULE_NAME
+
+	inventory_levels = get_inventory_levels(tuple(warehous_map.keys()), MODULE_NAME)
+
+	if not inventory_levels:
+		return {"status": "skipped", "message": "No inventory changes to sync"}
+
+	frappe.enqueue(
+		"ecom_bridge.integrations.shopify.inventory.upload_inventory_data_to_shopify",
+		queue="short",
+		timeout=300,
+		inventory_levels=inventory_levels,
+		warehous_map=warehous_map,
+	)
+
+	return {
+		"status": "queued",
+		"message": f"Inventory sync queued for {len(inventory_levels)} items",
+	}
+
+
+@frappe.whitelist()
+def force_fulfillment_sync(delivery_note):
+	"""Manually trigger fulfillment sync for a specific Delivery Note."""
+	dn = frappe.get_doc("Delivery Note", delivery_note)
+	if dn.docstatus != 1:
+		frappe.throw("Delivery Note must be submitted before syncing fulfillment")
+
+	if dn.get("shopify_fulfillment_id"):
+		frappe.throw("This Delivery Note already has a Shopify fulfillment ID")
+
+	from ecom_bridge.shopify.fulfillment import _get_shopify_order_id
+
+	shopify_order_id = _get_shopify_order_id(dn)
+	if not shopify_order_id:
+		frappe.throw("No Shopify order linked to this Delivery Note")
+
+	frappe.enqueue(
+		"ecom_bridge.shopify.fulfillment.create_fulfillment_on_shopify",
+		queue="short",
+		timeout=120,
+		shopify_order_id=shopify_order_id,
+		delivery_note=delivery_note,
+	)
+
+	return {
+		"status": "queued",
+		"message": f"Fulfillment sync queued for Shopify order {shopify_order_id}",
+	}
+
+
 def _get_shopify_stats():
 	"""Get Shopify-specific sync statistics."""
 	today = nowdate()
