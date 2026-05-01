@@ -220,7 +220,14 @@ class AmazonRepository:
 			ecommerce_item.insert(ignore_permissions=True)
 
 		catalog_items = self.get_catalog_items_instance()
-		amazon_item = catalog_items.get_catalog_item(order_item["ASIN"])["payload"]
+		try:
+			catalog_response = catalog_items.get_catalog_item(order_item["ASIN"])
+			amazon_item = catalog_response.get("payload") if isinstance(catalog_response, dict) else None
+		except Exception:
+			amazon_item = None
+
+		# Fallback: build minimal item from order_item if Catalog API fails or v0 is deprecated
+		has_catalog_data = bool(amazon_item and amazon_item.get("AttributeSets"))
 
 		item = frappe.new_doc("Item")
 
@@ -231,12 +238,19 @@ class AmazonRepository:
 			if field_map.item_field:
 				setattr(item, field_map.item_field, order_item[field_map.amazon_field])
 
-		item.item_group = create_item_group(amazon_item)
-		item.brand = create_brand(amazon_item)
-		item.manufacturer = create_manufacturer(amazon_item)
+		if has_catalog_data:
+			item.item_group = create_item_group(amazon_item)
+			item.brand = create_brand(amazon_item)
+			item.manufacturer = create_manufacturer(amazon_item)
+		else:
+			item.item_group = self.amz_setting.parent_item_group or "All Item Groups"
+			if not item.item_name:
+				item.item_name = order_item.get("Title") or order_item.get("SellerSKU") or order_item["ASIN"]
+
 		item.insert(ignore_permissions=True)
 
-		create_item_price(amazon_item, item.item_code)
+		if has_catalog_data:
+			create_item_price(amazon_item, item.item_code)
 		create_ecommerce_item(order_item, item.item_code)
 
 		return item.item_code
