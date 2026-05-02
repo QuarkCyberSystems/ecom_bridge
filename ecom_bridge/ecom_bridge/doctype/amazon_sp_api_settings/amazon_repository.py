@@ -375,10 +375,12 @@ class AmazonRepository:
 				return
 			else:
 				make_address = frappe.new_doc("Address")
-				make_address.address_line1 = shipping_address.get("AddressLine1", "Not Provided")
-				make_address.city = shipping_address.get("City", "Not Provided")
-				make_address.state = shipping_address.get("StateOrRegion").title()
+				make_address.address_line1 = shipping_address.get("AddressLine1") or shipping_address.get("County") or "Not Provided"
+				make_address.city = shipping_address.get("City") or "Not Provided"
+				state = shipping_address.get("StateOrRegion") or shipping_address.get("County")
+				make_address.state = state.title() if state else None
 				make_address.pincode = shipping_address.get("PostalCode")
+				make_address.country = shipping_address.get("CountryCode")
 
 				filters = [
 					["Dynamic Link", "link_doctype", "=", "Customer"],
