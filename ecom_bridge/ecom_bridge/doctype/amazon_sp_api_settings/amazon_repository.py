@@ -380,7 +380,12 @@ class AmazonRepository:
 				state = shipping_address.get("StateOrRegion") or shipping_address.get("County")
 				make_address.state = state.title() if state else None
 				make_address.pincode = shipping_address.get("PostalCode")
-				make_address.country = shipping_address.get("CountryCode")
+				country_code = shipping_address.get("CountryCode")
+				if country_code:
+					country_name = frappe.db.get_value("Country", {"code": country_code.lower()}, "name")
+					make_address.country = country_name or country_code
+				else:
+					make_address.country = None
 
 				filters = [
 					["Dynamic Link", "link_doctype", "=", "Customer"],
