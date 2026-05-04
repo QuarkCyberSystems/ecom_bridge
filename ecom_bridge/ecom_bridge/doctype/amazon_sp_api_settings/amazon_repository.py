@@ -423,8 +423,17 @@ class AmazonRepository:
 			customer_name = create_customer(order)
 			create_address(order, customer_name)
 
-			delivery_date = dateutil.parser.parse(order.get("LatestShipDate")).strftime("%Y-%m-%d")
 			transaction_date = dateutil.parser.parse(order.get("PurchaseDate")).strftime("%Y-%m-%d")
+			latest_ship_date = order.get("LatestShipDate")
+			if latest_ship_date:
+				try:
+					delivery_date = dateutil.parser.parse(latest_ship_date).strftime("%Y-%m-%d")
+				except (ValueError, TypeError):
+					delivery_date = transaction_date
+			else:
+				delivery_date = transaction_date
+			if delivery_date < transaction_date:
+				delivery_date = transaction_date
 
 			so = frappe.new_doc("Sales Order")
 			so.amazon_order_id = order_id
