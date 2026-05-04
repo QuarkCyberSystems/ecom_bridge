@@ -458,7 +458,13 @@ class AmazonRepository:
 					so.append("taxes", fee)
 
 			so.insert(ignore_permissions=True)
-			so.submit()
+			try:
+				so.submit()
+			except Exception:
+				frappe.log_error(
+					title=f"Amazon SO submit failed (kept as Draft): {so.name}",
+					message=frappe.get_traceback(with_context=True),
+				)
 
 			return so.name
 
