@@ -471,8 +471,6 @@ class AmazonRepository:
 	def get_orders(self, created_after) -> list:
 		orders = self.get_orders_instance()
 		order_statuses = [
-			"PendingAvailability",
-			"Pending",
 			"Unshipped",
 			"PartiallyShipped",
 			"Shipped",
