@@ -247,6 +247,9 @@ class AmazonRepository:
 			if not item.item_name:
 				item.item_name = order_item.get("Title") or order_item.get("SellerSKU") or order_item["ASIN"]
 
+		if item.item_name and len(item.item_name) > 140:
+			item.item_name = item.item_name[:140]
+
 		item.insert(ignore_permissions=True)
 
 		if has_catalog_data:
