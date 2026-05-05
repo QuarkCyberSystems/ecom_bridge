@@ -414,59 +414,62 @@ class AmazonRepository:
 
 		if so:
 			return so
-		else:
-			items = self.get_order_items(order_id)
 
-			if not items:
-				return
+		if not order.get("OrderTotal", {}).get("Amount"):
+			return
 
-			customer_name = create_customer(order)
-			create_address(order, customer_name)
+		if order.get("SalesChannel") == "Non-Amazon":
+			return
 
-			transaction_date = dateutil.parser.parse(order.get("PurchaseDate")).strftime("%Y-%m-%d")
-			latest_ship_date = order.get("LatestShipDate")
-			if latest_ship_date:
-				try:
-					delivery_date = dateutil.parser.parse(latest_ship_date).strftime("%Y-%m-%d")
-				except (ValueError, TypeError):
-					delivery_date = transaction_date
-			else:
-				delivery_date = transaction_date
-			if delivery_date < transaction_date:
-				delivery_date = transaction_date
+		items = self.get_order_items(order_id)
 
-			so = frappe.new_doc("Sales Order")
-			so.amazon_order_id = order_id
-			so.marketplace_id = order.get("MarketplaceId")
-			so.customer = customer_name
-			so.delivery_date = delivery_date
-			so.transaction_date = transaction_date
-			so.company = self.amz_setting.company
+		if not items:
+			return
 
-			for item in items:
-				so.append("items", item)
+		customer_name = create_customer(order)
+		create_address(order, customer_name)
 
-			taxes_and_charges = self.amz_setting.taxes_charges
-
-			if taxes_and_charges:
-				charges_and_fees = self.get_charges_and_fees(order_id)
-
-				for charge in charges_and_fees.get("charges"):
-					so.append("taxes", charge)
-
-				for fee in charges_and_fees.get("fees"):
-					so.append("taxes", fee)
-
-			so.insert(ignore_permissions=True)
+		transaction_date = dateutil.parser.parse(order.get("PurchaseDate")).strftime("%Y-%m-%d")
+		latest_ship_date = order.get("LatestShipDate")
+		if latest_ship_date:
 			try:
-				so.submit()
-			except Exception:
-				frappe.log_error(
-					title=f"Amazon SO submit failed (kept as Draft): {so.name}",
-					message=frappe.get_traceback(with_context=True),
-				)
+				delivery_date = dateutil.parser.parse(latest_ship_date).strftime("%Y-%m-%d")
+			except (ValueError, TypeError):
+				delivery_date = transaction_date
+		else:
+			delivery_date = transaction_date
+		if delivery_date < transaction_date:
+			delivery_date = transaction_date
 
-			return so.name
+		so = frappe.new_doc("Sales Order")
+		so.amazon_order_id = order_id
+		so.marketplace_id = order.get("MarketplaceId")
+		so.customer = customer_name
+		so.delivery_date = delivery_date
+		so.transaction_date = transaction_date
+		so.company = self.amz_setting.company
+
+		for item in items:
+			so.append("items", item)
+
+		taxes_and_charges = self.amz_setting.taxes_charges
+
+		if taxes_and_charges:
+			charges_and_fees = self.get_charges_and_fees(order_id)
+
+			for charge in charges_and_fees.get("charges"):
+				so.append("taxes", charge)
+
+			for fee in charges_and_fees.get("fees"):
+				so.append("taxes", fee)
+
+		so.insert(ignore_permissions=True)
+		try:
+			so.submit()
+		except Exception:
+			pass
+
+		return so.name
 
 	def get_orders(self, created_after) -> list:
 		orders = self.get_orders_instance()
